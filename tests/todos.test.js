@@ -39,4 +39,18 @@ describe('Todos API', () => {
     const res = await request(app).get('/todos/999999');
     expect(res.status).toBe(404);
   });
+
+  it('deletes a todo', async () => {
+    const created = await request(app).post('/todos').send({ title: 'Delete me' });
+    const del = await request(app).delete(`/todos/${created.body.id}`);
+    expect(del.status).toBe(204);
+
+    const getAfter = await request(app).get(`/todos/${created.body.id}`);
+    expect(getAfter.status).toBe(404);
+  });
+
+  it('returns 404 when deleting a todo that does not exist', async () => {
+    const res = await request(app).delete('/todos/999999');
+    expect(res.status).toBe(404);
+  });
 });
