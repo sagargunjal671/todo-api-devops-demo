@@ -1,0 +1,20 @@
+{
+  "name": "todo-api-devops-demo",
+  "version": "1.0.0",
+  "description": "Small Todo REST API used to learn and demonstrate a real CI/CD pipeline (GitHub Actions, Docker, deploy).",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^10.7.0",
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
+  }
+}
