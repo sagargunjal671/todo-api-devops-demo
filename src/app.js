@@ -37,4 +37,15 @@ app.get('/todos/:id', (req, res) => {
   res.status(200).json(todo);
 });
 
+app.delete('/todos/:id', (req, res) => {
+  const index = todos.findIndex((t) => t.id === Number(req.params.id));
+
+  if (index === -1) {
+    return res.status(404).json({ error: 'todo not found' });
+  }
+
+  todos.splice(index, 1);
+  res.status(204).send();
+});
+
 module.exports = app;
