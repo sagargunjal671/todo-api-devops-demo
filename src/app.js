@@ -63,6 +63,17 @@ app.put('/todos/:id', (req, res) => {
   res.status(200).json(todo);
 });
 
+app.patch('/todos/:id/complete', (req, res) => {
+  const todo = todos.find((t) => t.id === Number(req.params.id));
+
+  if (!todo) {
+    return res.status(404).json({ error: 'todo not found' });
+  }
+
+  todo.completed = true;
+  res.status(200).json(todo);
+});
+
 app.delete('/todos/:id', (req, res) => {
   const index = todos.findIndex((t) => t.id === Number(req.params.id));
 

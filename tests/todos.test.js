@@ -54,6 +54,18 @@ describe('Todos API', () => {
     expect(res.status).toBe(404);
   });
 
+  it('marks a todo as complete', async () => {
+    const created = await request(app).post('/todos').send({ title: 'Complete me' });
+    const res = await request(app).patch(`/todos/${created.body.id}/complete`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ completed: true });
+  });
+
+  it('returns 404 when completing a todo that does not exist', async () => {
+    const res = await request(app).patch('/todos/999999/complete');
+    expect(res.status).toBe(404);
+  });
+
   it('deletes a todo', async () => {
     const created = await request(app).post('/todos').send({ title: 'Delete me' });
     const del = await request(app).delete(`/todos/${created.body.id}`);
