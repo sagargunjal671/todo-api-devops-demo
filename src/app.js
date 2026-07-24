@@ -37,6 +37,32 @@ app.get('/todos/:id', (req, res) => {
   res.status(200).json(todo);
 });
 
+app.put('/todos/:id', (req, res) => {
+  const todo = todos.find((t) => t.id === Number(req.params.id));
+
+  if (!todo) {
+    return res.status(404).json({ error: 'todo not found' });
+  }
+
+  const { title, completed } = req.body;
+
+  if (title !== undefined) {
+    if (typeof title !== 'string') {
+      return res.status(400).json({ error: 'title must be a string' });
+    }
+    todo.title = title;
+  }
+
+  if (completed !== undefined) {
+    if (typeof completed !== 'boolean') {
+      return res.status(400).json({ error: 'completed must be a boolean' });
+    }
+    todo.completed = completed;
+  }
+
+  res.status(200).json(todo);
+});
+
 app.delete('/todos/:id', (req, res) => {
   const index = todos.findIndex((t) => t.id === Number(req.params.id));
 

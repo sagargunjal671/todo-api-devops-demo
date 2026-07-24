@@ -40,6 +40,20 @@ describe('Todos API', () => {
     expect(res.status).toBe(404);
   });
 
+  it('updates a todo', async () => {
+    const created = await request(app).post('/todos').send({ title: 'Update me' });
+    const res = await request(app)
+      .put(`/todos/${created.body.id}`)
+      .send({ title: 'Updated title', completed: true });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ title: 'Updated title', completed: true });
+  });
+
+  it('returns 404 when updating a todo that does not exist', async () => {
+    const res = await request(app).put('/todos/999999').send({ title: 'Nope' });
+    expect(res.status).toBe(404);
+  });
+
   it('deletes a todo', async () => {
     const created = await request(app).post('/todos').send({ title: 'Delete me' });
     const del = await request(app).delete(`/todos/${created.body.id}`);
