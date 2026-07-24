@@ -5,8 +5,8 @@
 > This file = where we currently are in that plan. Update it after every meaningful step.
 
 ## Current status
-- **Day:** 1 — COMPLETE ✅
-- **Stage:** Ready to start Day 2 (deploy job) in a future session
+- **Day:** 2 — COMPLETE ✅ (plus a branch-conflict exercise done between Day 1 and Day 2)
+- **Stage:** Ready to start Day 3 (Jenkins concepts + Docker basics) in a future session
 
 ## Done so far (Day 1, full)
 - [x] Local git repo initialized in `c:\xampp3\htdocs\ci-cd`, branch `main`
@@ -31,6 +31,28 @@
 - [x] Verified `pull_request` trigger: opened PR #1 (`feature/add-delete-todo` adding `DELETE /todos/:id`), CI ran
       green as a pre-merge check, merged via GitHub UI, local `main` synced (`git pull`), feature branch deleted
 
+## Extra exercise: two-developer merge conflict (between Day 1 and Day 2)
+Hands-on demo of a real interview scenario: two devs both branch from the same `main` tip and edit
+the same lines.
+- [x] `feature/dev1-update-todo` — added `PUT /todos/:id` (update a todo's title/completed), merged first, clean (no conflict, `main` hadn't moved)
+- [x] `feature/dev2-complete-todo` — added `PATCH /todos/:id/complete` in the same location in `src/app.js`, opened its PR *after* dev1 merged
+- [x] PR #3 showed a real conflict (both branches edited the same lines relative to their shared ancestor)
+- [x] Resolved with `git fetch origin` + `git merge origin/main` (merge, not rebase — branch was already pushed/had an open PR), manually kept both routes, removed conflict markers, re-ran tests, committed the merge, pushed, merged the PR
+- [x] Confirmed on `main` afterward: both `PUT` and `PATCH .../complete` coexist, all tests green
+- Also discussed conceptually (not built): a 3rd-dev pileup — each subsequent dev's conflict is always resolved against the *current* state of `main` at that moment, not a one-time checkpoint; this is why "require branch up to date before merge" branch-protection rules exist
+
+## Day 2 (full) — Deploy job to Render
+- [x] Created a Render Web Service connected to `sagargunjal671/todo-api-devops-demo` (branch `main`, build `npm install`, start `npm start`, Free instance, Health Check Path `/health`)
+- [x] Set **Auto-Deploy to Off** — deliberately decoupling "push happened" from "deploy happened," so GitHub Actions (not Render's own git watcher) controls when a deploy fires
+- [x] Copied Render's Deploy Hook URL, added as GitHub Actions secret `RENDER_DEPLOY_HOOK` (Settings → Secrets and variables → Actions)
+- [x] Added a `deploy` job to `.github/workflows/ci.yml`:
+  - `needs: lint-and-test` — won't run unless tests pass first (the CI→CD gate)
+  - `if: github.event_name == 'push' && github.ref == 'refs/heads/main'` — only on a real push to `main`, never on a PR
+  - Single step: `curl -f "${{ secrets.RENDER_DEPLOY_HOOK }}"`
+- [x] Verified a real end-to-end run: `lint-and-test` → `deploy` both green in sequence on a push to `main`; confirmed a corresponding new deploy appeared in Render's dashboard and `/health` responded live
+- [x] Added `README.md` with a live CI badge (`.../actions/workflows/ci.yml/badge.svg`), pipeline summary, and endpoint table
+- [x] Discussed conceptually: what happens on CI failure (deploy job never runs, old version keeps serving) vs. a deploy that fails Render's health check (old version keeps serving, no downtime) vs. fixing a bug (same PR process again, no special redeploy path); CI vs. Continuous Delivery vs. Continuous Deployment distinction (this pipeline is genuinely Continuous *Deployment* — no manual approval gate)
+
 ## Decision: handoff file IS tracked in git
 Originally planned to keep `CICD-LEARNING-HANDOFF.md` out of git (gitignored). Changed: it's now tracked and pushed
 along with this file, specifically so a Claude session opened from a fresh clone (e.g. on another PC) has full
@@ -43,7 +65,6 @@ This is deliberate: the point of this project is the user's own hands-on CI/CD p
 their behalf.
 
 ## Remaining days (not started)
-- Day 2 — Add deploy job to Render/Railway; jobs/steps/secrets/artifacts/caching/triggers concepts
 - Day 3 — Jenkins concepts + Docker basics
 - Day 4 — Deployment strategies, environments/promotion, secrets management, rollback
 - Day 5 — Interview prep + full mock run-through
