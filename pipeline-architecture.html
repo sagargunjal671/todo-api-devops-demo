@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Pipeline You Actually Built</title>
+<style>
+  :root {
+    --bg: #F3F6F8; --bg-elevated: #FFFFFF; --text: #1B232C; --text-muted: #5B6975; --border: #D9E0E5;
+    --ci: #1E7F79; --ci-soft: #E3F1EF;
+    --cd: #A85A15; --cd-soft: #F7E9D9;
+    --platform: #46525C; --platform-soft: #E9EDEF;
+    --code-bg: #EDF1F3; --code-text: #2A333B;
+    --shadow: 0 1px 2px rgba(20,30,40,0.06), 0 6px 20px rgba(20,30,40,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #10161C; --bg-elevated: #161E25; --text: #E7ECEF; --text-muted: #93A3AD; --border: #2B363F;
+      --ci: #59D6CB; --ci-soft: #16302E;
+      --cd: #E7A857; --cd-soft: #3A2A14;
+      --platform: #AEB9C2; --platform-soft: #1D242C;
+      --code-bg: #0D1319; --code-text: #D7E0E6;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 860px; margin: 0 auto; padding: 3.2rem 1.5rem 5rem; }
+  .serif { font-family: Georgia, "Iowan Old Style", "Times New Roman", serif; }
+  .eyebrow {
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-muted); margin: 0 0 0.9rem;
+  }
+  h1 { font-weight: 800; font-size: clamp(1.7rem, 4vw, 2.2rem); letter-spacing: -0.01em; line-height: 1.2; margin: 0 0 0.6rem; text-wrap: balance; }
+  .lede {
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.08rem; color: var(--text-muted); max-width: 62ch; margin: 0 0 3rem; line-height: 1.6;
+  }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 0.82em; }
+  code { background: var(--code-bg); color: var(--code-text); padding: 0.1em 0.38em; border-radius: 4px; }
+
+  .diagram { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+  .node {
+    background: var(--bg-elevated); border-radius: 10px; box-shadow: var(--shadow);
+    padding: 0.9rem 1.2rem; text-align: center; width: 100%; max-width: 24rem;
+  }
+  .node .lbl {
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; display: block; margin-bottom: 0.25rem;
+  }
+  .node .name { font-weight: 700; font-size: 0.98rem; }
+  .node .sub { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+  .node--dev { border: 1.5px solid var(--platform); }
+  .node--dev .lbl { color: var(--platform); }
+  .node--gh { border: 1.5px solid var(--platform); background: var(--platform-soft); }
+  .node--gh .lbl { color: var(--platform); }
+  .node--ci { border: 1.5px solid var(--ci); }
+  .node--ci .lbl { color: var(--ci); }
+  .node--secret { border: 1.5px dashed var(--cd); background: var(--cd-soft); }
+  .node--secret .lbl { color: var(--cd); }
+  .node--cd { border: 1.5px solid var(--cd); }
+  .node--cd .lbl { color: var(--cd); }
+  .node--render { border: 1.5px solid var(--platform); background: var(--platform-soft); }
+  .node--render .lbl { color: var(--platform); }
+  .node--live { border: 2px solid var(--ci); background: var(--ci-soft); }
+  .node--live .lbl { color: var(--ci); }
+
+  .arrow { color: var(--text-muted); font-size: 1.1rem; line-height: 1; padding: 0.35rem 0; }
+  .arrow .note {
+    display: block; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; font-weight: 600;
+  }
+
+  .fork { display: flex; gap: 1rem; width: 100%; max-width: 40rem; justify-content: center; align-items: stretch; }
+  .fork-branch { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0; max-width: 19rem; }
+
+  .pill {
+    display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em;
+    padding: 0.15rem 0.55rem; border-radius: 20px; margin-bottom: 0.4rem;
+  }
+  .pill--pr { background: var(--platform-soft); color: var(--platform); }
+  .pill--push { background: var(--ci-soft); color: var(--ci); }
+  .stop-note {
+    font-size: 0.78rem; color: var(--text-muted); text-align: center; margin-top: 0.6rem; max-width: 15rem;
+  }
+
+  .steps-row { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: center; margin-top: 0.5rem; }
+  .steps-row span {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.68rem;
+    background: var(--code-bg); color: var(--code-text); padding: 0.15rem 0.4rem; border-radius: 4px;
+  }
+
+  .dual-in { display: flex; gap: 1rem; width: 100%; max-width: 34rem; align-items: flex-end; justify-content: center; }
+  .dual-in .node { max-width: 15rem; }
+
+  .legend {
+    margin-top: 3rem; display: flex; gap: 1.2rem; flex-wrap: wrap; justify-content: center;
+    font-size: 0.82rem; color: var(--text-muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="page">
+  <p class="eyebrow">CI/CD Learning &middot; System Architecture</p>
+  <h1 class="serif">The pipeline you actually built</h1>
+  <p class="lede">Not theory this time — the real path a commit takes through <code>todo-api-devops-demo</code>, from your keyboard to a live URL.</p>
+
+  <div class="diagram">
+
+    <div class="node node--dev">
+      <span class="lbl">You</span>
+      <div class="name">git commit &middot; git push</div>
+      <div class="sub">local machine, <code>todo-api-devops-demo</code></div>
+    </div>
+    <div class="arrow">&darr;</div>
+
+    <div class="fork">
+      <div class="fork-branch">
+        <span class="pill pill--pr">Pull Request</span>
+        <div class="node node--gh" style="margin-bottom: 0.6rem;">
+          <span class="lbl">GitHub</span>
+          <div class="name">PR opened against main</div>
+        </div>
+      </div>
+      <div class="fork-branch">
+        <span class="pill pill--push">Direct push</span>
+        <div class="node node--gh" style="margin-bottom: 0.6rem;">
+          <span class="lbl">GitHub</span>
+          <div class="name">Push to main (a merge)</div>
+        </div>
+      </div>
+    </div>
+    <div class="arrow">&darr;<span class="note">both trigger the same workflow file</span></div>
+
+    <div class="node node--ci">
+      <span class="lbl">GitHub Actions &middot; Job 1</span>
+      <div class="name">lint-and-test</div>
+      <div class="steps-row">
+        <span>checkout</span><span>setup-node</span><span>npm ci</span><span>lint</span><span>test</span>
+      </div>
+    </div>
+
+    <div class="fork" style="margin-top: 0.6rem;">
+      <div class="fork-branch">
+        <div class="arrow">&darr;</div>
+        <div class="stop-note"><strong>PR path stops here.</strong> Tests must pass before merge is allowed, but nothing deploys.</div>
+      </div>
+      <div class="fork-branch">
+        <div class="arrow">&darr;<span class="note">needs: lint-and-test &middot; if: push to main</span></div>
+      </div>
+    </div>
+
+    <div class="dual-in">
+      <div class="node node--secret">
+        <span class="lbl">GitHub Secrets</span>
+        <div class="name">RENDER_DEPLOY_HOOK</div>
+        <div class="sub">encrypted, masked in logs</div>
+      </div>
+    </div>
+    <div class="arrow">&darr;</div>
+
+    <div class="node node--cd">
+      <span class="lbl">GitHub Actions &middot; Job 2</span>
+      <div class="name">deploy</div>
+      <div class="steps-row"><span>curl -f "$RENDER_DEPLOY_HOOK"</span></div>
+    </div>
+    <div class="arrow">&darr;<span class="note">HTTP call to Render's deploy-hook URL</span></div>
+
+    <div class="node node--render">
+      <span class="lbl">Render</span>
+      <div class="name">Web Service (Auto-Deploy: Off)</div>
+      <div class="sub">pulls latest <code>main</code> via its GitHub App connection, then <code>npm install</code> &rarr; <code>npm start</code></div>
+    </div>
+    <div class="arrow">&darr;<span class="note">health check on /health before routing traffic</span></div>
+
+    <div class="node node--live">
+      <span class="lbl">Live</span>
+      <div class="name">todo-api-devops-demo.onrender.com</div>
+      <div class="sub">serving real traffic</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="swatch" style="background: var(--platform);"></span> Platform (GitHub / Render)</span>
+    <span><span class="swatch" style="background: var(--ci);"></span> CI (verification)</span>
+    <span><span class="swatch" style="background: var(--cd);"></span> CD (shipping)</span>
+  </div>
+</div>
+</body>
+</html>

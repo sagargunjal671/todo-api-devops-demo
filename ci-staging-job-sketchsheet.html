@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ci.yml — Adding the Staging Job</title>
+<style>
+  :root {
+    --paper: #FBF7EE; --card: #FFFFFF; --ink: #2B241A; --ink-muted: #7A7364; --rule: #C9D6E0; --margin: #E2A79A;
+    --red: #E5533D; --red-soft: #FBE3DE;
+    --blue: #2E86C1; --blue-soft: #DDEAF5;
+    --green: #3FA34D; --green-soft: #E1F1E3;
+    --code-bg: #EFEAD9; --code-text: #2B241A;
+    --shadow: 0 3px 4px rgba(60,45,20,0.08), 0 8px 18px rgba(60,45,20,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14181A; --card: #1B2118; --ink: #E9E6DC; --ink-muted: #9AA398; --rule: #2C3A32; --margin: #6B4A44;
+      --red: #F0806B; --red-soft: #2E1F1B;
+      --blue: #7CC0F0; --blue-soft: #16262E;
+      --green: #7FD495; --green-soft: #172A1C;
+      --code-bg: #0F1512; --code-text: #D9E4DC;
+      --shadow: 0 2px 3px rgba(0,0,0,0.4), 0 10px 22px rgba(0,0,0,0.45);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background-image:
+      repeating-linear-gradient(var(--paper), var(--paper) 1.68em, var(--rule) 1.68em, var(--rule) calc(1.68em + 1px));
+    background-position: 0 6rem;
+  }
+  .margin-line {
+    position: fixed; top: 0; bottom: 0; left: 2.6rem; width: 2px; background: var(--margin); opacity: 0.55; z-index: 0;
+  }
+  .page { max-width: 880px; margin: 0 auto; padding: 3rem 1.5rem 5rem 3.6rem; position: relative; z-index: 1; }
+
+  .hand { font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive; }
+  code, .mono, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+
+  .eyebrow { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin: 0 0 0.3rem; }
+  h1.hand {
+    font-size: clamp(1.8rem, 5vw, 2.5rem); font-weight: 700; margin: 0 0 0.3rem; line-height: 1.15;
+    transform: rotate(-0.6deg); display: inline-block;
+  }
+  .sub { color: var(--ink-muted); font-size: 1.02rem; margin: 0 0 1.8rem; max-width: 62ch; }
+
+  /* flow diagram at top */
+  .flow-wrap { display: flex; gap: 1.2rem; flex-wrap: wrap; margin-bottom: 2.4rem; }
+  .flow-line { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .flow-chip {
+    padding: 0.4rem 0.7rem; border-radius: 6px; font-size: 0.85rem; font-weight: 700; color: #fff;
+  }
+  .flow-arrow { color: var(--ink-muted); }
+
+  .grid { display: grid; grid-template-columns: 1fr; gap: 1.6rem; }
+
+  .card {
+    background: var(--card); border-radius: 8px; box-shadow: var(--shadow); padding: 1.2rem 1.4rem 1.4rem;
+    position: relative; border: 2.5px solid var(--accent);
+  }
+  .n1 { --accent: var(--red); transform: rotate(-0.5deg); }
+  .n2 { --accent: var(--blue); transform: rotate(0.5deg); }
+  .n3 { --accent: var(--green); transform: rotate(-0.4deg); }
+
+  .badge {
+    width: 2.1rem; height: 2.1rem; border-radius: 50%; background: var(--accent); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem;
+    box-shadow: var(--shadow); margin-bottom: 0.5rem;
+  }
+  .card h2 {
+    font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+    font-size: 1.3rem; margin: 0 0 0.7rem; color: var(--accent);
+  }
+
+  ul.arrows { list-style: none; margin: 0 0 0.9rem; padding: 0; }
+  ul.arrows li { margin-bottom: 0.4rem; font-size: 0.95rem; }
+  ul.arrows li b { color: var(--accent); }
+
+  pre {
+    background: var(--code-bg); color: var(--code-text); border-radius: 6px; padding: 0.8rem 1rem;
+    font-size: 0.82rem; line-height: 1.55; overflow-x: auto; margin: 0; border: 1px solid var(--accent);
+  }
+
+  .sticky {
+    position: absolute; top: -0.9rem; right: -0.7rem; background: var(--red-soft); border: 1px solid var(--red);
+    color: var(--ink); font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+    font-size: 0.82rem; padding: 0.5rem 0.7rem; border-radius: 3px; box-shadow: var(--shadow);
+    transform: rotate(4deg); max-width: 11rem; z-index: 2;
+  }
+</style>
+</head>
+<body>
+<div class="margin-line"></div>
+<div class="page">
+  <p class="eyebrow">📓 Sketchsheet &middot; Code Walkthrough</p>
+  <h1 class="hand">ci.yml — adding the staging job</h1>
+  <p class="sub">Same file, three changes. Here's exactly what each one does.</p>
+
+  <div class="flow-wrap">
+    <div class="flow-line">
+      <span class="flow-chip" style="background:var(--blue)">push → develop</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-chip" style="background:var(--blue)">deploy-staging</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-chip" style="background:var(--blue)">staging service</span>
+    </div>
+    <div class="flow-line">
+      <span class="flow-chip" style="background:var(--green)">push → main</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-chip" style="background:var(--green)">deploy-prod</span>
+      <span class="flow-arrow">&rarr;</span>
+      <span class="flow-chip" style="background:var(--green)">prod service</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card n1">
+      <span class="badge">1</span>
+      <h2>The trigger widens</h2>
+      <ul class="arrows">
+        <li><b>Before</b> → only <code>main</code> was watched at all</li>
+        <li><b>Now</b> → <code>develop</code> is watched too, for both push and PR</li>
+        <li><b>Why</b> → staging gets the exact same quality gate prod does — nothing skips lint/test just for being "only staging"</li>
+      </ul>
+      <pre>on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]</pre>
+    </div>
+
+    <div class="card n2">
+      <span class="sticky">brand new job 🆕</span>
+      <span class="badge">2</span>
+      <h2>New job → deploy-staging</h2>
+      <ul class="arrows">
+        <li><b>needs: lint-and-test</b> → same gate as prod, tests must pass first</li>
+        <li><b>if: ref == develop</b> → only fires on a push to <code>develop</code>, never <code>main</code> or a PR</li>
+        <li><b>secrets.RENDER_STAGING_DEPLOY_HOOK</b> → the new secret, points at the staging Render service specifically</li>
+      </ul>
+      <pre>deploy-staging:
+  needs: lint-and-test
+  if: github.event_name == 'push' &&
+      github.ref == 'refs/heads/develop'
+  steps:
+    - run: curl -f "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"</pre>
+    </div>
+
+    <div class="card n3">
+      <span class="badge">3</span>
+      <h2>Renamed → deploy-prod</h2>
+      <ul class="arrows">
+        <li><b>Same job as before</b> → just renamed, now that there are two deploy targets to tell apart</li>
+        <li><b>Still gated on main</b> → behavior is completely unchanged</li>
+        <li><b>Still uses RENDER_DEPLOY_HOOK</b> → the original secret, untouched</li>
+      </ul>
+      <pre>deploy-prod:            # was: deploy
+  needs: lint-and-test
+  if: github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+  steps:
+    - run: curl -f "${{ secrets.RENDER_DEPLOY_HOOK }}"</pre>
+    </div>
+  </div>
+</div>
+</body>
+</html>

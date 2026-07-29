@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day 4 — Deployment Strategies &amp; Environments</title>
+<style>
+  :root {
+    --paper: #FBF7EE; --card: #FFFFFF; --ink: #2B241A; --ink-muted: #7A7364; --rule: #C9D6E0; --margin: #E2A79A;
+    --red: #E5533D; --red-soft: #FBE3DE;
+    --yellow: #C99A02; --yellow-soft: #FBF0CE;
+    --blue: #2E86C1; --blue-soft: #DDEAF5;
+    --green: #3FA34D; --green-soft: #E1F1E3;
+    --violet: #8E5FBF; --violet-soft: #EEE5F6;
+    --orange: #F2994A; --orange-soft: #FCE8D8;
+    --shadow: 0 3px 4px rgba(60,45,20,0.08), 0 8px 18px rgba(60,45,20,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14181A; --card: #1B2118; --ink: #E9E6DC; --ink-muted: #9AA398; --rule: #2C3A32; --margin: #6B4A44;
+      --red: #F0806B; --red-soft: #2E1F1B;
+      --yellow: #E8C752; --yellow-soft: #2E2A16;
+      --blue: #7CC0F0; --blue-soft: #16262E;
+      --green: #7FD495; --green-soft: #172A1C;
+      --violet: #C6A6EA; --violet-soft: #241C2E;
+      --orange: #F5B67A; --orange-soft: #2E2116;
+      --shadow: 0 2px 3px rgba(0,0,0,0.4), 0 10px 22px rgba(0,0,0,0.45);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background-image:
+      repeating-linear-gradient(var(--paper), var(--paper) 1.68em, var(--rule) 1.68em, var(--rule) calc(1.68em + 1px));
+    background-position: 0 6rem;
+  }
+  .margin-line {
+    position: fixed; top: 0; bottom: 0; left: 2.6rem; width: 2px; background: var(--margin); opacity: 0.55; z-index: 0;
+  }
+  .page { max-width: 980px; margin: 0 auto; padding: 3rem 1.5rem 5rem 3.6rem; position: relative; z-index: 1; }
+
+  .hand { font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 0.83em; }
+
+  .eyebrow { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin: 0 0 0.3rem; }
+  h1.hand {
+    font-size: clamp(1.9rem, 5vw, 2.6rem); font-weight: 700; margin: 0 0 0.3rem; line-height: 1.15;
+    transform: rotate(-0.6deg); display: inline-block;
+  }
+  .sub { color: var(--ink-muted); font-size: 1.02rem; margin: 0 0 2.2rem; max-width: 62ch; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem 1.3rem; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card); border-radius: 8px; box-shadow: var(--shadow); padding: 1.1rem 1.3rem 1.3rem;
+    position: relative; border: 2.5px solid var(--accent);
+  }
+  .n1 { --accent: var(--red); transform: rotate(-1.1deg); }
+  .n2 { --accent: var(--orange); transform: rotate(0.8deg); }
+  .n3 { --accent: var(--yellow); transform: rotate(-0.6deg); }
+  .n4 { --accent: var(--blue); transform: rotate(1rem); transform: rotate(1deg); }
+  .n5 { --accent: var(--violet); transform: rotate(-0.9deg); }
+  .n6 { --accent: var(--green); transform: rotate(0.6deg); }
+
+  .badge {
+    width: 2.1rem; height: 2.1rem; border-radius: 50%; background: var(--accent); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem;
+    box-shadow: var(--shadow); margin-bottom: 0.5rem;
+  }
+  .card h2 {
+    font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+    font-size: 1.28rem; margin: 0 0 0.6rem; color: var(--accent);
+  }
+
+  ul.arrows { list-style: none; margin: 0 0 0.7rem; padding: 0; }
+  ul.arrows li { margin-bottom: 0.4rem; font-size: 0.94rem; }
+  ul.arrows li b { color: var(--accent); }
+
+  .tradeoff {
+    margin-top: 0.7rem; font-size: 0.86rem; padding: 0.5rem 0.7rem; border-radius: 6px; background: var(--paper);
+    border: 1px dashed var(--accent);
+  }
+  .tradeoff b { color: var(--accent); }
+
+  /* blue-green flow */
+  .bg-flow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.6rem 0; }
+  .bg-chip {
+    padding: 0.35rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 700; text-align: center;
+  }
+  .bg-chip.live { background: var(--accent); color: #fff; }
+  .bg-chip.idle { background: var(--paper); border: 2px dashed var(--accent); color: var(--accent); }
+  .bg-arrow { color: var(--ink-muted); font-size: 1rem; }
+
+  /* canary bars */
+  .canary-steps { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.6rem 0; }
+  .canary-step { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; }
+  .canary-bar { flex: 1; height: 0.7rem; border-radius: 4px; background: var(--paper); border: 1px solid var(--accent); overflow: hidden; }
+  .canary-fill { height: 100%; background: var(--accent); }
+  .canary-label { width: 3.2rem; flex: none; font-weight: 700; color: var(--accent); }
+
+  /* rolling instances */
+  .rolling-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.35rem 0; }
+  .rolling-row .frame { display: flex; gap: 3px; }
+  .rolling-row .box { width: 0.85rem; height: 0.85rem; border-radius: 2px; background: var(--paper); border: 1.5px solid var(--ink-muted); }
+  .rolling-row .box.new { background: var(--accent); border-color: var(--accent); }
+  .rolling-row .lbl { font-size: 0.74rem; color: var(--ink-muted); width: 3.6rem; }
+
+  /* env promotion flow */
+  .env-flow { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin: 0.6rem 0 0.8rem; }
+  .env-chip {
+    padding: 0.4rem 0.7rem; border-radius: 6px; font-size: 0.82rem; font-weight: 700; background: var(--accent); color: #fff;
+  }
+  .env-chip.staging { opacity: 0.8; }
+  .env-chip.prod { opacity: 1; }
+  .env-arrow { color: var(--ink-muted); font-size: 0.95rem; }
+
+  .checklist { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+  .checklist li { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.9rem; margin-bottom: 0.35rem; }
+  .checklist .box {
+    flex: none; width: 1rem; height: 1rem; border: 2px solid var(--accent); border-radius: 3px; margin-top: 0.15rem;
+  }
+
+  .sticky {
+    position: absolute; top: -0.9rem; right: -0.7rem; background: var(--yellow-soft); border: 1px solid var(--yellow);
+    color: var(--ink); font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+    font-size: 0.82rem; padding: 0.5rem 0.7rem; border-radius: 3px; box-shadow: var(--shadow);
+    transform: rotate(4deg); max-width: 10rem; z-index: 2;
+  }
+  .sticky.pink { background: var(--red-soft); border-color: var(--red); transform: rotate(-4deg); }
+
+  .strip {
+    margin-top: 2.4rem; background: var(--card); border-radius: 8px; box-shadow: var(--shadow);
+    padding: 1.1rem 1.3rem; border-left: 6px solid var(--violet);
+  }
+  .strip h3.hand { font-size: 1.15rem; margin: 0 0 0.7rem; color: var(--violet); }
+  .strip .line { font-size: 0.92rem; margin-bottom: 0.45rem; }
+  .strip .line b { color: var(--violet); }
+</style>
+</head>
+<body>
+<div class="margin-line"></div>
+<div class="page">
+  <p class="eyebrow">📓 Sketchsheet &middot; Day 4</p>
+  <h1 class="hand">Deployment strategies &amp; environments</h1>
+  <p class="sub">How the industry actually ships changes without breaking prod for everyone at once — and what to do when it breaks anyway.</p>
+
+  <div class="grid">
+
+    <div class="card n1">
+      <span class="badge">1</span>
+      <h2>Blue-Green</h2>
+      <ul class="arrows">
+        <li><b>Blue</b> → the current live version</li>
+        <li><b>Green</b> → the new version, running alongside, not yet public</li>
+        <li><b>Flip</b> → switch traffic to Green, all at once</li>
+      </ul>
+      <div class="bg-flow">
+        <span class="bg-chip live">Blue: live</span>
+        <span class="bg-chip idle">Green: staged</span>
+        <span class="bg-arrow">&rarr; test &rarr; flip &rarr;</span>
+      </div>
+      <div class="bg-flow">
+        <span class="bg-chip live">Green: live</span>
+        <span class="bg-chip idle">Blue: standby</span>
+      </div>
+      <div class="tradeoff"><b>Tradeoff:</b> rollback is instant — just flip back to Blue. Costs double: two full environments running at once.</div>
+    </div>
+
+    <div class="card n2">
+      <span class="badge">2</span>
+      <h2>Canary</h2>
+      <ul class="arrows">
+        <li><b>Canary</b> → named after coal-mine canaries, an early warning</li>
+        <li>Send a <b>small slice</b> of real traffic to the new version first</li>
+        <li>Watch error rates &amp; metrics before widening it</li>
+      </ul>
+      <div class="canary-steps">
+        <div class="canary-step"><span class="canary-label">5%</span><div class="canary-bar"><div class="canary-fill" style="width:5%"></div></div></div>
+        <div class="canary-step"><span class="canary-label">25%</span><div class="canary-bar"><div class="canary-fill" style="width:25%"></div></div></div>
+        <div class="canary-step"><span class="canary-label">100%</span><div class="canary-bar"><div class="canary-fill" style="width:100%"></div></div></div>
+      </div>
+      <div class="tradeoff"><b>Tradeoff:</b> catches real-world problems on a small blast radius, but is slower to fully roll out and needs traffic-splitting infrastructure.</div>
+    </div>
+
+    <div class="card n3">
+      <span class="sticky">most common default 🔁</span>
+      <span class="badge">3</span>
+      <h2>Rolling</h2>
+      <ul class="arrows">
+        <li>Replace instances <b>one (or a few) at a time</b></li>
+        <li>Old and new versions run <b>side by side</b>, briefly</li>
+      </ul>
+      <div class="rolling-row"><span class="lbl">start</span><div class="frame"><div class="box"></div><div class="box"></div><div class="box"></div><div class="box"></div></div></div>
+      <div class="rolling-row"><span class="lbl">step 1</span><div class="frame"><div class="box new"></div><div class="box"></div><div class="box"></div><div class="box"></div></div></div>
+      <div class="rolling-row"><span class="lbl">step 2</span><div class="frame"><div class="box new"></div><div class="box new"></div><div class="box"></div><div class="box"></div></div></div>
+      <div class="rolling-row"><span class="lbl">done</span><div class="frame"><div class="box new"></div><div class="box new"></div><div class="box new"></div><div class="box new"></div></div></div>
+      <div class="tradeoff"><b>Tradeoff:</b> no extra infrastructure needed (the default in Kubernetes/most PaaS), but rollback replays the same slow process, and old + new must stay compatible while both run.</div>
+    </div>
+
+    <div class="card n4">
+      <span class="badge">4</span>
+      <h2>Environments &amp; Promotion</h2>
+      <ul class="arrows">
+        <li><b>Dev</b> → where you build and break things freely</li>
+        <li><b>Staging</b> → a prod-like rehearsal, final check before real users</li>
+        <li><b>Prod</b> → real users, real consequences</li>
+      </ul>
+      <div class="env-flow">
+        <span class="env-chip">merge → develop</span>
+        <span class="env-arrow">&rarr;</span>
+        <span class="env-chip staging">auto-deploy staging</span>
+      </div>
+      <div class="env-flow">
+        <span class="env-chip">tag a release</span>
+        <span class="env-arrow">&rarr;</span>
+        <span class="env-chip prod">auto-deploy prod</span>
+      </div>
+      <div class="tradeoff"><b>Why bother:</b> staging exists specifically to catch what dev can't — real-ish data, real-ish traffic patterns, without risking actual users.</div>
+    </div>
+
+    <div class="card n5">
+      <span class="badge">5</span>
+      <h2>Secrets Management</h2>
+      <ul class="arrows">
+        <li><b>Env var / secret store</b> → injected at runtime, never committed to code — this is exactly what <code>RENDER_DEPLOY_HOOK</code> already is in this project</li>
+        <li><b>Vault</b> → a dedicated system (HashiCorp Vault, AWS Secrets Manager) for larger orgs — auto-rotates credentials, tightly access-controlled</li>
+      </ul>
+      <ul class="checklist">
+        <li><span class="box"></span> never commit secrets to git</li>
+        <li><span class="box"></span> rotate them periodically</li>
+        <li><span class="box"></span> give each secret the least access it needs</li>
+        <li><span class="box"></span> confirm they're masked in logs</li>
+      </ul>
+    </div>
+
+    <div class="card n6">
+      <span class="sticky pink">this is the "what if it breaks" answer 🚨</span>
+      <span class="badge">6</span>
+      <h2>Rollback Strategies</h2>
+      <ul class="arrows">
+        <li><b>Roll back</b> → redeploy the last known-good version immediately</li>
+        <li><b>Roll forward</b> → fix the bug and push a new deploy through the normal pipeline</li>
+        <li><b>git revert</b> → undo the bad commit cleanly, then let the pipeline redeploy it</li>
+      </ul>
+      <ul class="checklist">
+        <li><span class="box"></span> detect it (monitoring / alerts / health check failing)</li>
+        <li><span class="box"></span> decide: roll back or roll forward?</li>
+        <li><span class="box"></span> execute through the same pipeline — never by hand on the server</li>
+        <li><span class="box"></span> confirm health, then do the post-mortem</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="strip">
+    <h3 class="hand">🎤 One-liners for the interview</h3>
+    <div class="line"><b>Blue-Green:</b> "Instant rollback, double the infrastructure cost."</div>
+    <div class="line"><b>Canary:</b> "Small blast radius first, then widen once metrics look good."</div>
+    <div class="line"><b>Rolling:</b> "The default almost everyone uses — no extra infra, but slower to undo."</div>
+    <div class="line"><b>Rollback:</b> "Always through the pipeline, never a manual SSH fix on the live server."</div>
+  </div>
+</div>
+</body>
+</html>

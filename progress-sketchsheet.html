@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CI/CD Learning Journey — Progress Check</title>
+<style>
+  :root {
+    --paper: #FBF7EE; --card: #FFFFFF; --ink: #2B241A; --ink-muted: #7A7364; --rule: #C9D6E0; --margin: #E2A79A;
+    --red: #E5533D; --red-soft: #FBE3DE;
+    --yellow: #C99A02; --yellow-soft: #FBF0CE;
+    --blue: #2E86C1; --blue-soft: #DDEAF5;
+    --green: #3FA34D; --green-soft: #E1F1E3;
+    --violet: #8E5FBF; --violet-soft: #EEE5F6;
+    --orange: #F2994A; --orange-soft: #FCE8D8;
+    --shadow: 0 3px 4px rgba(60,45,20,0.08), 0 8px 18px rgba(60,45,20,0.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14181A; --card: #1B2118; --ink: #E9E6DC; --ink-muted: #9AA398; --rule: #2C3A32; --margin: #6B4A44;
+      --red: #F0806B; --red-soft: #2E1F1B;
+      --yellow: #E8C752; --yellow-soft: #2E2A16;
+      --blue: #7CC0F0; --blue-soft: #16262E;
+      --green: #7FD495; --green-soft: #172A1C;
+      --violet: #C6A6EA; --violet-soft: #241C2E;
+      --orange: #F5B67A; --orange-soft: #2E2116;
+      --shadow: 0 2px 3px rgba(0,0,0,0.4), 0 10px 22px rgba(0,0,0,0.45);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    background-image:
+      repeating-linear-gradient(var(--paper), var(--paper) 1.68em, var(--rule) 1.68em, var(--rule) calc(1.68em + 1px));
+    background-position: 0 6rem;
+  }
+  .margin-line {
+    position: fixed; top: 0; bottom: 0; left: 2.6rem; width: 2px; background: var(--margin); opacity: 0.55; z-index: 0;
+  }
+  .page { max-width: 920px; margin: 0 auto; padding: 3rem 1.5rem 5rem 3.6rem; position: relative; z-index: 1; }
+
+  .hand { font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size: 0.85em; }
+
+  .eyebrow { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-muted); margin: 0 0 0.3rem; }
+  h1.hand {
+    font-size: clamp(1.9rem, 5vw, 2.7rem); font-weight: 700; margin: 0 0 0.3rem; line-height: 1.15;
+    transform: rotate(-0.6deg); display: inline-block;
+  }
+  .sub { color: var(--ink-muted); font-size: 1.02rem; margin: 0 0 2.2rem; max-width: 60ch; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem 1.3rem; }
+  @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card); border-radius: 8px; box-shadow: var(--shadow); padding: 1.1rem 1.3rem 1.3rem;
+    position: relative;
+  }
+  .card.done { border: 2.5px solid var(--accent); }
+  .card.pending {
+    background: transparent; border: 2px dashed var(--accent); box-shadow: none;
+  }
+  .n1 { --accent: var(--red); transform: rotate(-1.1deg); }
+  .n2 { --accent: var(--violet); transform: rotate(0.9deg); }
+  .n3 { --accent: var(--blue); transform: rotate(-0.7deg); }
+  .n4 { --accent: var(--orange); transform: rotate(1.3deg); }
+  .n5 { --accent: var(--green); transform: rotate(-0.5deg); grid-column: 1 / -1; }
+
+  .badge {
+    width: 2.1rem; height: 2.1rem; border-radius: 50%; background: var(--accent); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem;
+    box-shadow: var(--shadow); margin-bottom: 0.5rem;
+  }
+  .card h2 {
+    font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+    font-size: 1.28rem; margin: 0 0 0.6rem; color: var(--accent);
+  }
+  .status {
+    display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.15rem 0.55rem; border-radius: 20px; background: var(--accent); color: #fff; margin-bottom: 0.6rem;
+  }
+  .status.open { background: transparent; border: 2px dashed var(--accent); color: var(--accent); }
+
+  ul.arrows { list-style: none; margin: 0; padding: 0; }
+  ul.arrows li { margin-bottom: 0.4rem; font-size: 0.94rem; }
+  ul.arrows li b { color: var(--accent); }
+
+  .checklist { list-style: none; margin: 0.6rem 0 0; padding: 0; }
+  .checklist li { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.94rem; margin-bottom: 0.35rem; }
+  .checklist .box {
+    flex: none; width: 1.1rem; height: 1.1rem; border: 2px solid var(--accent); border-radius: 3px; margin-top: 0.15rem;
+    display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; color: var(--accent);
+  }
+  .checklist li.done .box::after { content: "✓"; }
+  .checklist li.todo .box::after { content: ""; }
+
+  .sticky {
+    position: absolute; top: -0.9rem; right: -0.8rem; background: var(--yellow-soft); border: 1px solid var(--yellow);
+    color: var(--ink); font-family: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive;
+    font-size: 0.85rem; padding: 0.5rem 0.7rem; border-radius: 3px; box-shadow: var(--shadow);
+    transform: rotate(4deg); max-width: 9rem;
+  }
+
+  .strip {
+    margin-top: 2.4rem; background: var(--card); border-radius: 8px; box-shadow: var(--shadow);
+    padding: 1rem 1.3rem; border-left: 6px solid var(--red);
+  }
+  .strip h3.hand { font-size: 1.15rem; margin: 0 0 0.6rem; color: var(--red); }
+  .strip code {
+    display: inline-block; background: var(--red-soft); color: var(--ink); padding: 0.25rem 0.55rem;
+    border-radius: 5px; margin: 0.2rem 0.3rem 0.2rem 0; font-size: 0.82rem;
+  }
+</style>
+</head>
+<body>
+<div class="margin-line"></div>
+<div class="page">
+  <p class="eyebrow">📓 Sketchsheet &middot; Progress Check</p>
+  <h1 class="hand">Where we're at on the CI/CD journey</h1>
+  <p class="sub">Days 1–2 shipped a real pipeline. Day 3's theory is done — hands-on is paused for one restart.</p>
+
+  <div class="grid">
+    <div class="card done n1">
+      <span class="status">Done</span>
+      <div class="badge">1</div>
+      <h2>Day 1 — Foundations</h2>
+      <ul class="arrows">
+        <li><b>Built</b> → Todo API, Express + Jest + ESLint</li>
+        <li><b>Pushed</b> → GitHub, <code>todo-api-devops-demo</code></li>
+        <li><b>CI live</b> → lint + test on push/PR</li>
+        <li><b>Real bug fixed</b> → CI lockfile fail on Linux runner</li>
+        <li><b>Verified</b> → a real PR merge, checks green</li>
+      </ul>
+    </div>
+
+    <div class="card done n2">
+      <span class="status">Done</span>
+      <div class="badge">2</div>
+      <h2>Bonus — Merge Conflict</h2>
+      <ul class="arrows">
+        <li><b>dev1</b> → <code>PUT /todos/:id</code>, merged first</li>
+        <li><b>dev2</b> → <code>PATCH .../complete</code>, same lines</li>
+        <li><b>Result</b> → real conflict on PR #2</li>
+        <li><b>Fixed</b> → <code>git merge origin/main</code>, resolved by hand</li>
+      </ul>
+    </div>
+
+    <div class="card done n3">
+      <span class="status">Done</span>
+      <div class="badge">3</div>
+      <h2>Day 2 — Ship It</h2>
+      <ul class="arrows">
+        <li><b>Host</b> → Render, Auto-Deploy Off</li>
+        <li><b>Secret</b> → <code>RENDER_DEPLOY_HOOK</code></li>
+        <li><b>New job</b> → <code>deploy</code>, needs + if gated</li>
+        <li><b>Verified</b> → lint-and-test &rarr; deploy, green end to end</li>
+        <li><b>Badge</b> → live CI badge on README</li>
+      </ul>
+    </div>
+
+    <div class="card pending n4">
+      <span class="sticky">Restart your PC first! 💻</span>
+      <span class="status open">In progress</span>
+      <div class="badge">4</div>
+      <h2>Day 3 — Jenkins + Docker</h2>
+      <ul class="arrows">
+        <li><b>Jenkins</b> → theory done (Jenkinsfile, controller/agent, plugins)</li>
+        <li><b>Docker</b> → theory done (image vs container, vs VM)</li>
+      </ul>
+      <ul class="checklist">
+        <li class="done"><span class="box"></span> Dockerfile + .dockerignore written</li>
+        <li class="done"><span class="box"></span> Docker Desktop installed</li>
+        <li class="todo"><span class="box"></span> Restart PC so PATH updates</li>
+        <li class="todo"><span class="box"></span> <code>docker build -t todo-api .</code></li>
+        <li class="todo"><span class="box"></span> <code>docker run -p 3000:3000 todo-api</code></li>
+        <li class="todo"><span class="box"></span> confirm <code>/health</code> from inside the container</li>
+      </ul>
+    </div>
+
+    <div class="card pending n5">
+      <span class="status open">Not started</span>
+      <div class="badge">5</div>
+      <h2>Day 4 &amp; Day 5 — What's left after this</h2>
+      <ul class="arrows">
+        <li><b>Day 4</b> → blue-green / canary / rolling deploys, dev-staging-prod promotion, secrets vaults, rollback strategy</li>
+        <li><b>Day 5</b> → interview prep — walk through the pipeline out loud, mock Q&amp;A, honest "what's manual vs automated" narrative</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="strip">
+    <h3 class="hand">👉 The moment you're back from restart, run:</h3>
+    <code>docker --version</code>
+    <code>docker build -t todo-api .</code>
+    <code>docker run -p 3000:3000 todo-api</code>
+    <code>curl http://localhost:3000/health</code>
+  </div>
+</div>
+</body>
+</html>
