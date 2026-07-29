@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   lint-and-test:
@@ -29,11 +29,20 @@ jobs:
       - name: Test
         run: npm test
 
-  deploy:
+  deploy-staging:
+    needs: lint-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render staging deploy
+        run: curl -f "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
+
+  deploy-prod:
     needs: lint-and-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Trigger Render deploy
+      - name: Trigger Render prod deploy
         run: curl -f "${{ secrets.RENDER_DEPLOY_HOOK }}"
