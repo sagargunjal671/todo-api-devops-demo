@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({ status: 'ok', env: process.env.APP_ENV || 'unknown' });
 });
 
 let todos = [];
