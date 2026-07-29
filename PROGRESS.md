@@ -5,8 +5,8 @@
 > This file = where we currently are in that plan. Update it after every meaningful step.
 
 ## Current status
-- **Day:** 2 — COMPLETE ✅ (plus a branch-conflict exercise done between Day 1 and Day 2)
-- **Stage:** Ready to start Day 3 (Jenkins concepts + Docker basics) in a future session
+- **Day:** 4 (staging/promotion hands-on) — COMPLETE ✅. Day 3 Docker hands-on PAUSED (see below).
+- **Stage:** Ready for Day 5 (interview prep) in a future session — or resume Day 3 Docker hands-on once Docker Desktop's virtualization/WSL2 issue is fixed.
 
 ## Done so far (Day 1, full)
 - [x] Local git repo initialized in `c:\xampp3\htdocs\ci-cd`, branch `main`
@@ -53,6 +53,43 @@ the same lines.
 - [x] Added `README.md` with a live CI badge (`.../actions/workflows/ci.yml/badge.svg`), pipeline summary, and endpoint table
 - [x] Discussed conceptually: what happens on CI failure (deploy job never runs, old version keeps serving) vs. a deploy that fails Render's health check (old version keeps serving, no downtime) vs. fixing a bug (same PR process again, no special redeploy path); CI vs. Continuous Delivery vs. Continuous Deployment distinction (this pipeline is genuinely Continuous *Deployment* — no manual approval gate)
 
+## Day 3 — Jenkins + Docker (theory done, hands-on PAUSED)
+- [x] Jenkins covered conceptually: Jenkinsfile vs `ci.yml`, stage vs job (stages run sequentially by
+      default, unlike GH Actions jobs which default to parallel), controller/agent architecture, plugins vs
+      Marketplace Actions
+- [x] Docker covered conceptually: image vs container, container vs VM, an annotated Dockerfile, plain-English
+      shipping-container explainer
+- [x] `Dockerfile` and `.dockerignore` written in the repo root (Node 20-alpine, installs deps before copying
+      source for layer caching, `CMD ["node", "src/server.js"]`)
+- [x] Docker Desktop installed
+- [ ] **BLOCKED:** `docker build` fails — Docker Desktop engine won't start. `wsl --status` shows: "Please enable
+      the Virtual Machine Platform Windows feature and ensure virtualization is enabled in the BIOS." User is
+      fixing this outside of a session (needs a BIOS-level virtualization check, possibly a restart). Resume with:
+      confirm `docker --version` and `docker build -t todo-api .` both work, then `docker run` + curl `/health`
+      from inside the container.
+- Created the `sketchsheet` skill (`~/.claude/skills/sketchsheet/SKILL.md`, personal/global scope) during this
+  session — a hand-drawn sketchnote-cheatsheet style for theory explanations, used for Day 3/4 material. In this
+  project specifically, sketchsheets and doc-style primers get saved as **local HTML files** in the repo root
+  (not published as claude.ai Artifacts) — see e.g. `progress-sketchsheet.html`, `day4-deployment-strategies-sketchsheet.html`.
+
+## Day 4 — Deployment strategies + environments (hands-on, COMPLETE)
+- [x] Concept sketchsheet covering blue-green, canary, rolling deploys, environments/promotion, secrets
+      management, rollback strategies (`day4-deployment-strategies-sketchsheet.html`)
+- [x] Created `develop` branch (`git checkout -b develop` from `main`)
+- [x] Created a second Render Web Service (`todo-api-devops-demo-staging`) on the `develop` branch, Auto-Deploy
+      off, same build/start/health-check config as prod
+- [x] Added `RENDER_STAGING_DEPLOY_HOOK` GitHub secret
+- [x] Updated `.github/workflows/ci.yml`: triggers now include `develop`; split the old `deploy` job into
+      `deploy-staging` (`if: ref == develop`) and `deploy-prod` (renamed from `deploy`, `if: ref == main`) —
+      both `needs: lint-and-test`
+- [x] Verified the split works: push to `develop` → only `deploy-staging` fires (`deploy-prod` shows "skipped");
+      merge PR `develop` → `main` → only `deploy-prod` fires
+- [x] Reinforced the whole flow with a real small feature: added `env` field to `/health`
+      (`process.env.APP_ENV || 'unknown'`), set `APP_ENV=staging` / `APP_ENV=production` as Render environment
+      variables on each respective service, pushed to `develop` (staging showed `env:"staging"`), promoted via PR
+      to `main` (prod showed `env:"production"`) — confirmed the two environments are genuinely distinct
+- [x] Updated the `/health` test to `toMatchObject` instead of `toEqual` so it doesn't break regardless of `env`'s value
+
 ## Decision: handoff file IS tracked in git
 Originally planned to keep `CICD-LEARNING-HANDOFF.md` out of git (gitignored). Changed: it's now tracked and pushed
 along with this file, specifically so a Claude session opened from a fresh clone (e.g. on another PC) has full
@@ -64,9 +101,9 @@ Claude writes/explains actual app code (Write/Edit); the user types and runs eve
 This is deliberate: the point of this project is the user's own hands-on CI/CD practice, not Claude executing on
 their behalf.
 
-## Remaining days (not started)
-- Day 3 — Jenkins concepts + Docker basics
-- Day 4 — Deployment strategies, environments/promotion, secrets management, rollback
+## Remaining
+- Day 3 Docker hands-on — resume once Docker Desktop's virtualization/WSL2 issue is fixed (see above)
+- Day 5 — Interview prep + full mock run-through
 - Day 5 — Interview prep + full mock run-through
 
 ## How to resume in a new session
